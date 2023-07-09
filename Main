@@ -1,0 +1,58 @@
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+; #Warn  ; Enable warnings to assist with detecting common errors.
+SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+StringCaseSense, Locale
+
+:?:/я::
+SendInput % "Пополнение склада " A_DD "." A_Mon "." A_Year A_Space A_Space A_Hour ":" A_Min
+return
+
+{ ; ######################################################################### КОПИРОВАНИЕ В ТАБЛИЦУ
+#IfWinActive
+
+OnClipboardChange:
+If WinActive("ahk_exe chrome.exe") or WinActive("ahk_exe browser.exe")
+{
+	If Instr(Clipboard, "Текущие остатки товаров на складах") ; Остатки
+	{
+		Pos := InStr(Clipboard, "Применить")+13
+			List := SubStr(Clipboard, Pos)
+		Pos := InStr(List, "Маркетплейсы (ID")
+			List := SubStr(List, 1, Pos-3)
+		Clipboard := List
+		Resultstring :=
+		Loop, parse, List, `n, `r
+		{
+		If RegexMatch(A_LoopField, "(\d+) (\d+)", Result)
+			{
+				Resultstring := Resultstring Result1 Result2 "`n"
+			}
+		else if A_LoopField is integer
+			Resultstring := Resultstring A_LoopField "`n"
+		else
+			Resultstring := Resultstring A_LoopField A_Tab
+		}
+		Clipboard := Resultstring
+	}
+	If Instr(Clipboard, "Движение и остатки товаров по складам") ; Оборот
+	{
+		Pos := InStr(Clipboard, "Применить")+13
+			List := SubStr(Clipboard, Pos)
+		Pos := InStr(List, "Всего — ")
+			List := SubStr(List, 1, Pos-3)
+		Resultstring :=
+		Loop, parse, List, `n, `r
+		{
+			if A_LoopField is integer
+				Resultstring := Resultstring A_LoopField "`n"
+			else
+				Resultstring := Resultstring A_LoopField A_Tab
+		}
+		Clipboard := Resultstring
+	}
+}
+return
+
+
+} ; Копирование в таблицу
